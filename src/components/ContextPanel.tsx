@@ -14,6 +14,7 @@ interface ContextPanelProps {
   onSendResponse?: () => void
   onViewTrello?: () => void
   onBackToEmail?: () => void
+  onAiResponseChange?: (value: string) => void
 }
 
 export default function ContextPanel({
@@ -27,6 +28,7 @@ export default function ContextPanel({
   onSendResponse,
   onViewTrello,
   onBackToEmail,
+  onAiResponseChange,
 }: ContextPanelProps) {
   return (
     <div className="flex flex-col h-full bg-white">
@@ -113,13 +115,14 @@ export default function ContextPanel({
                 >
                   <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
                     <Sparkles className="w-4 h-4 text-blue-600" />
-                    Réponse générée par IA
+                    Réponse générée par IA (modifiable)
                   </div>
-                  <div className="bg-blue-50 rounded-xl p-4 border border-blue-200">
-                    <p className="text-gray-800 whitespace-pre-line leading-relaxed">
-                      {aiResponse}
-                    </p>
-                  </div>
+                  <textarea
+                    value={aiResponse}
+                    onChange={(e) => onAiResponseChange?.(e.target.value)}
+                    className="w-full min-h-[300px] bg-blue-50 rounded-xl p-4 border border-blue-200 text-gray-800 leading-relaxed resize-y focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="La réponse générée par l'IA apparaîtra ici..."
+                  />
                 </motion.div>
               )}
 

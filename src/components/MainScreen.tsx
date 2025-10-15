@@ -100,6 +100,10 @@ export default function MainScreen() {
     }, 500)
   }
 
+  const handleAiResponseChange = (value: string) => {
+    setAiResponse(value)
+  }
+
   return (
     <div className="h-screen flex flex-col bg-gray-100">
       {/* Top Bar */}
@@ -152,6 +156,7 @@ export default function MainScreen() {
             onSendResponse={handleSendResponse}
             onViewTrello={currentTrelloCard ? handleViewTrello : undefined}
             onBackToEmail={handleBackToEmail}
+            onAiResponseChange={handleAiResponseChange}
           />
         </motion.div>
       </div>
