@@ -83,7 +83,8 @@ export default function ContextPanel({
                     "px-3 py-1 rounded-full text-xs font-medium",
                     email.category === 'reservation' && "bg-purple-100 text-purple-700",
                     email.category === 'question' && "bg-blue-100 text-blue-700",
-                    email.category === 'facture' && "bg-green-100 text-green-700"
+                    email.category === 'facture' && "bg-green-100 text-green-700",
+                    email.category === 'prestataire' && "bg-orange-100 text-orange-700"
                   )}>
                     {email.category}
                   </span>

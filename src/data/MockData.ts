@@ -5,7 +5,7 @@ export interface Email {
   subject: string
   content: string
   date: string
-  category: 'reservation' | 'facture' | 'question' | 'spam'
+  category: 'reservation' | 'facture' | 'question' | 'spam' | 'prestataire'
   trelloCardId?: string
 }
 
@@ -28,19 +28,29 @@ export interface Message {
 export const mockEmails: Email[] = [
   {
     id: 'email-1',
-    sender: 'Marie Dupont',
-    senderEmail: 'marie.dupont@gmail.com',
-    subject: 'Réservation pour juillet - 2 semaines',
-    content: `Bonjour,
+    sender: 'Laura Mercier',
+    senderEmail: 'l.mercier@digitalpulse-marketing.com',
+    subject: 'Campagne été 2025 - Questions sur le brief',
+    content: `Bonjour François,
 
-Je souhaite réserver un emplacement pour 2 semaines du 15 au 29 juillet pour ma famille (2 adultes, 2 enfants). Nous avons un camping-car de 7m.
+J'espère que vous allez bien. J'ai bien reçu votre cahier des charges pour la campagne digitale été 2025 du Camping Merendella.
 
-Pouvez-vous me confirmer les disponibilités et le tarif ?
+Avant de vous envoyer notre proposition détaillée, j'aurais quelques questions de clarification :
 
-Cordialement,
-Marie Dupont`,
+1. Concernant le budget global de 15K€, souhaitez-vous que l'on inclue aussi la création de contenu vidéo ou uniquement les visuels statiques ?
+
+2. Pour le ciblage publicitaire, vous mentionnez "familles avec enfants 4-12 ans" - avez-vous des données sur vos clients actuels que nous pourrions utiliser pour affiner les personas ?
+
+3. Le calendrier indique un démarrage campagne le 15 mars - confirmez-vous que vous aurez validé tous les visuels avant cette date ?
+
+Pourriez-vous me partager également les résultats de la campagne 2024 dont vous faisiez mention lors de notre dernière réunion ?
+
+Merci d'avance,
+Laura Mercier
+Chef de Projet Digital
+Digital Pulse Marketing`,
     date: '2024-10-09 08:30',
-    category: 'reservation',
+    category: 'prestataire',
     trelloCardId: 'trello-1'
   },
   {
@@ -114,14 +124,14 @@ Pierre Moreau`,
 export const mockTrelloCards: TrelloCard[] = [
   {
     id: 'trello-1',
-    title: 'Réservation Marie Dupont - Juillet',
-    description: 'Réservation pour 2 semaines du 15 au 29 juillet\nFamille: 2 adultes + 2 enfants\nCamping-car 7m',
-    list: 'Réservations en cours',
+    title: 'Campagne Marketing Été 2025 - Digital Pulse',
+    description: 'Projet campagne digitale avec Digital Pulse Marketing\nBudget: 15K€\nLancement prévu: 15 mars 2025',
+    list: 'Projets Marketing',
     checklist: [
-      { id: '1', text: 'Vérifier disponibilité emplacement grand format', checked: false },
-      { id: '2', text: 'Calculer le tarif (haute saison)', checked: false },
-      { id: '3', text: 'Envoyer devis par email', checked: false },
-      { id: '4', text: 'Attendre confirmation et acompte', checked: false }
+      { id: '1', text: 'Valider le budget final (vidéo incluse ou non)', checked: false },
+      { id: '2', text: 'Partager données clients 2024 pour personas', checked: false },
+      { id: '3', text: 'Confirmer résultats campagne 2024', checked: false },
+      { id: '4', text: 'Valider le timeline de validation des visuels', checked: false }
     ],
     linkedEmailId: 'email-1'
   },
@@ -161,7 +171,91 @@ export const initialMessages: Message[] = [
   }
 ]
 
+// Interface pour les actions de l'IA (processus RAG visible)
+export interface AIAction {
+  id: string
+  type: 'search' | 'analyze' | 'retrieve' | 'generate'
+  description: string
+  status: 'pending' | 'in_progress' | 'completed'
+  details?: string
+}
+
+export const mockAIActions: AIAction[] = [
+  {
+    id: 'action-1',
+    type: 'analyze',
+    description: 'Analyse de l\'expéditeur',
+    status: 'pending',
+    details: 'l.mercier@digitalpulse-marketing.com'
+  },
+  {
+    id: 'action-2',
+    type: 'search',
+    description: 'Recherche du contexte prestataire',
+    status: 'pending',
+    details: 'Digital Pulse Marketing - Historique des échanges'
+  },
+  {
+    id: 'action-3',
+    type: 'retrieve',
+    description: 'Récupération du cahier des charges',
+    status: 'pending',
+    details: 'Cahier_des_charges_campagne_ete_2025.pdf'
+  },
+  {
+    id: 'action-4',
+    type: 'retrieve',
+    description: 'Extraction des données campagne 2024',
+    status: 'pending',
+    details: 'Rapport_performance_campagne_2024.xlsx'
+  },
+  {
+    id: 'action-5',
+    type: 'search',
+    description: 'Recherche statistiques clients actuels',
+    status: 'pending',
+    details: 'Base de données CRM - Segmentation familles'
+  },
+  {
+    id: 'action-6',
+    type: 'generate',
+    description: 'Génération de la réponse contextualisée',
+    status: 'pending'
+  }
+]
+
 export const mockAIResponse = {
+  prestataire: `Bonjour Laura,
+
+Merci pour votre email et pour votre réactivité sur ce projet.
+
+Voici les réponses à vos questions :
+
+**1. Budget et contenu vidéo :**
+Le budget de 15K€ doit inclure la création de 2-3 vidéos courtes (30-45 sec) pour les réseaux sociaux. C'était un point important de notre brief initial. Si cela pose problème au niveau budget, merci de me proposer une alternative.
+
+**2. Ciblage et personas :**
+Excellente question ! Je vous transfère en pièce jointe notre analyse clients 2024. Voici quelques chiffres clés :
+- 68% de familles avec enfants 4-12 ans
+- 45% viennent de région parisienne, 30% Grand-Est, 25% autres
+- Durée moyenne séjour : 10 jours
+- Pic de réservation : février-mars
+
+**3. Timeline de validation :**
+Oui, je confirme la date du 15 mars pour le démarrage. Pour respecter ce délai, il faudrait que tous les visuels soient soumis avant le 1er mars, ce qui me laisse 2 semaines de validation.
+
+**Résultats campagne 2024 :**
+- ROI : 4,2x
+- Taux de conversion : 8,5%
+- 892 réservations directement attribuées à la campagne
+- Budget investi : 12K€
+
+Je reste disponible si vous avez besoin d'autres informations.
+
+Cordialement,
+François
+Camping Merendella`,
+
   reservation: `Bonjour Marie,
 
 Merci pour votre demande de réservation !

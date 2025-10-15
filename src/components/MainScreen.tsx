@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import ChatColumn from './ChatColumn'
 import ContextPanel from './ContextPanel'
-import { mockEmails, mockTrelloCards, initialMessages, mockAIResponse } from '../data/MockData'
-import type { Message } from '../data/MockData'
+import { mockEmails, mockTrelloCards, initialMessages, mockAIResponse, mockAIActions } from '../data/MockData'
+import type { Message, AIAction } from '../data/MockData'
 import Toast from './Toast'
 
 export default function MainScreen() {
@@ -13,6 +13,9 @@ export default function MainScreen() {
   const [aiResponse, setAiResponse] = useState<string>('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [toast, setToast] = useState<{ message: string; show: boolean }>({ message: '', show: false })
+  const [aiActions, setAiActions] = useState<AIAction[]>([...mockAIActions])
+  const [showAIActions, setShowAIActions] = useState(false)
+  const [aiActionsCompleted, setAiActionsCompleted] = useState(false)
 
   const currentEmail = mockEmails[currentEmailIndex]
   const currentTrelloCard = mockTrelloCards.find(card => card.id === currentEmail?.trelloCardId)
@@ -22,12 +25,75 @@ export default function MainScreen() {
     const timer = setTimeout(() => {
       addMessage('user', `Montre-moi le premier email à traiter.`)
       setTimeout(() => {
-        addMessage('assistant', `Voici le premier email de Marie Dupont concernant une réservation pour juillet. Je l'ai déjà analysé.`)
+        addMessage('assistant', `Voici l'email de Laura Mercier de Digital Pulse Marketing concernant la campagne été 2025. Je vais analyser le contexte pour préparer une réponse complète.`)
+
+        // Start AI actions progression for first email
+        if (currentEmailIndex === 0) {
+          triggerAIActionsSequence()
+        }
       }, 800)
     }, 1000)
 
     return () => clearTimeout(timer)
   }, [])
+
+  const triggerAIActionsSequence = () => {
+    setShowAIActions(true)
+
+    // Progress through actions sequentially
+    const delays = [500, 1200, 2000, 2800, 3600, 4400]
+
+    delays.forEach((delay, index) => {
+      setTimeout(() => {
+        setAiActions(prev =>
+          prev.map((action, i) =>
+            i === index
+              ? { ...action, status: 'in_progress' as const }
+              : action
+          )
+        )
+
+        // Complete after 600ms
+        setTimeout(() => {
+          setAiActions(prev =>
+            prev.map((action, i) =>
+              i === index
+                ? { ...action, status: 'completed' as const }
+                : action
+            )
+          )
+        }, 600)
+      }, delay)
+    })
+
+    // After all actions complete: hide actions, add message, generate response
+    setTimeout(() => {
+      setShowAIActions(false)
+
+      // Add completion message
+      setTimeout(() => {
+        addMessage('assistant', 'Analyse terminée ! J\'ai rassemblé toutes les informations nécessaires. Je génère maintenant une réponse complète...')
+
+        // Auto-trigger response generation
+        setTimeout(() => {
+          setIsGenerating(true)
+
+          setTimeout(() => {
+            const responseKey = currentEmail.category as keyof typeof mockAIResponse
+            const generatedResponse = mockAIResponse[responseKey] || mockAIResponse.reservation
+            setAiResponse(generatedResponse)
+            setIsGenerating(false)
+            addMessage('assistant', 'Voici la réponse générée avec toutes les données contextuelles. Vous pouvez la modifier si nécessaire avant de l\'envoyer.')
+          }, 2000)
+        }, 500)
+      }, 300)
+
+      // Reset actions for potential next use
+      setTimeout(() => {
+        setAiActions([...mockAIActions])
+      }, 1000)
+    }, 5500)
+  }
 
   const addMessage = (role: 'user' | 'assistant', content: string) => {
     const newMessage: Message = {
@@ -104,6 +170,24 @@ export default function MainScreen() {
     setAiResponse(value)
   }
 
+  const handleSendMessage = (content: string) => {
+    // Add user message
+    addMessage('user', content)
+
+    // Simulate AI response
+    setTimeout(() => {
+      const responses = [
+        'Bien sûr, je vais traiter cette demande.',
+        'Compris ! Je m\'en occupe immédiatement.',
+        'Parfait, laissez-moi analyser cela.',
+        'D\'accord, je vais vous aider avec ça.',
+        'Entendu, je prends en charge cette requête.'
+      ]
+      const randomResponse = responses[Math.floor(Math.random() * responses.length)]
+      addMessage('assistant', randomResponse)
+    }, 800)
+  }
+
   return (
     <div className="h-screen flex flex-col bg-gray-100">
       {/* Top Bar */}
@@ -135,7 +219,13 @@ export default function MainScreen() {
           transition={{ delay: 0.2 }}
           className="w-1/2 border-r border-gray-200"
         >
-          <ChatColumn messages={messages} />
+          <ChatColumn
+            messages={messages}
+            onSendMessage={handleSendMessage}
+            aiActions={aiActions}
+            showAIActions={showAIActions}
+            aiActionsCompleted={aiActionsCompleted}
+          />
         </motion.div>
 
         {/* Right Column - Context Panel */}
