@@ -5,7 +5,7 @@ export interface Email {
   subject: string
   content: string
   date: string
-  category: 'reservation' | 'facture' | 'question' | 'spam' | 'prestataire'
+  category: 'reservation' | 'facture' | 'question' | 'spam' | 'prestataire' | 'rendez-vous'
   trelloCardId?: string
 }
 
@@ -55,69 +55,29 @@ Digital Pulse Marketing`,
   },
   {
     id: 'email-2',
-    sender: 'Comptabilité EDF',
-    senderEmail: 'factures@edf.fr',
-    subject: 'Votre facture EDF de septembre 2024',
-    content: `Bonjour,
-
-Votre facture d'électricité pour le mois de septembre est disponible.
-
-Montant: 847,32 €
-Échéance: 25 octobre 2024
-
-Cordialement,
-Service Client EDF`,
-    date: '2024-10-09 07:15',
-    category: 'facture'
-  },
-  {
-    id: 'email-3',
-    sender: 'Jean Martin',
-    senderEmail: 'jm.martin@outlook.fr',
-    subject: 'Question sur les activités',
+    sender: 'Marc Dubois',
+    senderEmail: 'm.dubois@ecotech-solutions.fr',
+    subject: 'Rendez-vous - Installation panneaux solaires',
     content: `Bonjour François,
 
-Nous avons réservé pour la semaine prochaine et je voulais savoir quelles activités sont proposées pour les enfants de 8 ans ?
+Suite à notre échange téléphonique de la semaine dernière concernant l'installation de panneaux solaires photovoltaïques sur le bâtiment principal du camping, je souhaiterais planifier un rendez-vous sur site pour :
 
-Y a-t-il une piscine chauffée ?
+- Évaluer précisément la surface disponible
+- Mesurer l'ensoleillement actuel
+- Vous présenter notre proposition technique détaillée
+- Établir un devis personnalisé
 
-Merci !
-Jean`,
-    date: '2024-10-09 09:45',
-    category: 'question',
+Seriez-vous disponible dans les 10 prochains jours pour cette visite technique ? Celle-ci dure environ 1h30.
+
+Dans l'attente de votre retour,
+Cordialement,
+
+Marc Dubois
+Ingénieur Commercial
+EcoTech Solutions`,
+    date: '2024-10-09 09:15',
+    category: 'rendez-vous',
     trelloCardId: 'trello-2'
-  },
-  {
-    id: 'email-4',
-    sender: 'Sophie Laurent',
-    senderEmail: 'sophie.l@free.fr',
-    subject: 'Annulation réservation',
-    content: `Bonjour,
-
-Malheureusement, je dois annuler ma réservation du 20 au 27 août pour raisons familiales.
-
-Référence: RES-2024-0892
-
-Merci de me confirmer l'annulation.
-Sophie Laurent`,
-    date: '2024-10-09 10:20',
-    category: 'reservation',
-    trelloCardId: 'trello-3'
-  },
-  {
-    id: 'email-5',
-    sender: 'Pierre Moreau',
-    senderEmail: 'p.moreau@gmail.com',
-    subject: 'Félicitations pour votre séjour exceptionnel!',
-    content: `Bonjour,
-
-Nous avons passé un excellent séjour la semaine dernière. L'accueil était parfait, les emplacements bien entretenus.
-
-Un grand merci à toute l'équipe !
-
-Pierre Moreau`,
-    date: '2024-10-09 11:00',
-    category: 'question'
   }
 ]
 
@@ -137,28 +97,16 @@ export const mockTrelloCards: TrelloCard[] = [
   },
   {
     id: 'trello-2',
-    title: 'Question activités - Jean Martin',
-    description: 'Client arrive la semaine prochaine\nDemande infos activités enfants 8 ans + piscine',
-    list: 'À traiter rapidement',
+    title: 'RDV EcoTech - Panneaux Solaires',
+    description: 'Rendez-vous avec Marc Dubois (EcoTech Solutions)\nVisite technique installation panneaux photovoltaïques\nDurée: 1h30',
+    list: 'Rendez-vous',
     checklist: [
-      { id: '1', text: 'Envoyer programme activités enfants', checked: false },
-      { id: '2', text: 'Confirmer piscine chauffée 28°C', checked: false },
-      { id: '3', text: 'Mentionner club enfants 4-12 ans', checked: false }
+      { id: '1', text: 'Confirmer le créneau avec Marc Dubois', checked: true },
+      { id: '2', text: 'Créer événement Google Calendar', checked: true },
+      { id: '3', text: 'Préparer les plans du bâtiment principal', checked: false },
+      { id: '4', text: 'Rassembler les factures électricité 2024', checked: false }
     ],
-    linkedEmailId: 'email-3'
-  },
-  {
-    id: 'trello-3',
-    title: 'Annulation RES-2024-0892',
-    description: 'Sophie Laurent - Annulation du 20-27 août\nRaisons familiales',
-    list: 'Annulations & Remboursements',
-    checklist: [
-      { id: '1', text: 'Vérifier conditions annulation', checked: false },
-      { id: '2', text: 'Calculer montant remboursement', checked: false },
-      { id: '3', text: 'Libérer l\'emplacement dans le planning', checked: false },
-      { id: '4', text: 'Envoyer confirmation annulation', checked: false }
-    ],
-    linkedEmailId: 'email-4'
+    linkedEmailId: 'email-2'
   }
 ]
 
@@ -220,6 +168,51 @@ export const mockAIActions: AIAction[] = [
     id: 'action-6',
     type: 'generate',
     description: 'Génération de la réponse contextualisée',
+    status: 'pending'
+  }
+]
+
+// Actions RAG pour le rendez-vous (email 2)
+export const mockAIActionsRDV: AIAction[] = [
+  {
+    id: 'action-rdv-1',
+    type: 'analyze',
+    description: 'Analyse de la demande de rendez-vous',
+    status: 'pending',
+    details: 'm.dubois@ecotech-solutions.fr - Visite technique panneaux solaires'
+  },
+  {
+    id: 'action-rdv-2',
+    type: 'retrieve',
+    description: 'Accès à l\'agenda Google Calendar',
+    status: 'pending',
+    details: 'Calendrier François - 10 prochains jours'
+  },
+  {
+    id: 'action-rdv-3',
+    type: 'search',
+    description: 'Identification des créneaux disponibles',
+    status: 'pending',
+    details: '1h30 requis - hors période haute affluence'
+  },
+  {
+    id: 'action-rdv-4',
+    type: 'analyze',
+    description: 'Sélection du créneau optimal',
+    status: 'pending',
+    details: 'Mardi 15 octobre, 14h00-15h30'
+  },
+  {
+    id: 'action-rdv-5',
+    type: 'generate',
+    description: 'Création de l\'événement calendrier',
+    status: 'pending',
+    details: 'Google Calendar + notification'
+  },
+  {
+    id: 'action-rdv-6',
+    type: 'generate',
+    description: 'Génération de la réponse avec confirmation',
     status: 'pending'
   }
 ]
@@ -304,5 +297,26 @@ L'emplacement a été libéré dans notre planning.
 En espérant vous accueillir une prochaine fois.
 
 Cordialement,
-François - Camping Merendella`
+François - Camping Merendella`,
+
+  'rendez-vous': `Bonjour Marc,
+
+Merci pour votre email.
+
+J'ai le plaisir de vous confirmer que j'ai trouvé un créneau disponible pour votre visite technique concernant l'installation des panneaux solaires.
+
+**Rendez-vous confirmé :**
+📅 Mardi 15 octobre 2024
+🕐 14h00 - 15h30 (1h30)
+📍 Camping Merendella - Bâtiment principal
+
+J'ai créé l'événement dans mon agenda et vous recevrez une invitation Google Calendar avec tous les détails.
+
+N'hésitez pas à me contacter si vous avez besoin d'informations complémentaires avant la visite.
+
+Au plaisir de vous recevoir,
+
+Cordialement,
+François
+Camping Merendella`
 }

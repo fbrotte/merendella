@@ -84,7 +84,8 @@ export default function ContextPanel({
                     email.category === 'reservation' && "bg-purple-100 text-purple-700",
                     email.category === 'question' && "bg-blue-100 text-blue-700",
                     email.category === 'facture' && "bg-green-100 text-green-700",
-                    email.category === 'prestataire' && "bg-orange-100 text-orange-700"
+                    email.category === 'prestataire' && "bg-orange-100 text-orange-700",
+                    email.category === 'rendez-vous' && "bg-cyan-100 text-cyan-700"
                   )}>
                     {email.category}
                   </span>

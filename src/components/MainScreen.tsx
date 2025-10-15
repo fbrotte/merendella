@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import ChatColumn from './ChatColumn'
 import ContextPanel from './ContextPanel'
-import { mockEmails, mockTrelloCards, initialMessages, mockAIResponse, mockAIActions } from '../data/MockData'
+import { mockEmails, mockTrelloCards, initialMessages, mockAIResponse, mockAIActions, mockAIActionsRDV } from '../data/MockData'
 import type { Message, AIAction } from '../data/MockData'
 import Toast from './Toast'
 
@@ -20,22 +20,56 @@ export default function MainScreen() {
   const currentEmail = mockEmails[currentEmailIndex]
   const currentTrelloCard = mockTrelloCards.find(card => card.id === currentEmail?.trelloCardId)
 
+  // Initialize first example on mount
   useEffect(() => {
-    // Auto-advance to first email
-    const timer = setTimeout(() => {
-      addMessage('user', `Montre-moi le premier email à traiter.`)
-      setTimeout(() => {
-        addMessage('assistant', `Voici l'email de Laura Mercier de Digital Pulse Marketing concernant la campagne été 2025. Je vais analyser le contexte pour préparer une réponse complète.`)
-
-        // Start AI actions progression for first email
-        if (currentEmailIndex === 0) {
-          triggerAIActionsSequence()
-        }
-      }, 800)
-    }, 1000)
-
-    return () => clearTimeout(timer)
+    startExample(0)
   }, [])
+
+  const startExample = (emailIndex: number) => {
+    // Reset all state
+    setMessages([...initialMessages])
+    setCurrentEmailIndex(emailIndex)
+    setPanelMode('email')
+    setAiResponse('')
+    setIsGenerating(false)
+    setShowAIActions(false)
+    setAiActions([...mockAIActions])
+
+    const email = mockEmails[emailIndex]
+
+    // Start the appropriate scenario based on email index
+    const timer = setTimeout(() => {
+      if (emailIndex === 0) {
+        // Example 1: Marketing campaign with RAG
+        addMessage('user', `Montre-moi le premier email à traiter.`)
+        setTimeout(() => {
+          addMessage('assistant', `Voici l'email de Laura Mercier de Digital Pulse Marketing concernant la campagne été 2025. Je vais analyser le contexte pour préparer une réponse complète.`)
+          setTimeout(() => {
+            triggerAIActionsSequence()
+          }, 800)
+        }, 800)
+      } else if (emailIndex === 1) {
+        // Example 2: Appointment scheduling with calendar check
+        addMessage('user', `Montre-moi l'email concernant le rendez-vous.`)
+        setTimeout(() => {
+          addMessage('assistant', `Voici l'email de Marc Dubois concernant un rendez-vous pour les panneaux solaires. Je vais vérifier votre agenda et trouver un créneau disponible.`)
+          setTimeout(() => {
+            triggerAppointmentActionsSequence()
+          }, 800)
+        }, 800)
+      } else {
+        // Other examples: just show the email
+        addMessage('user', `Montre-moi cet email.`)
+        setTimeout(() => {
+          addMessage('assistant', `Voici l'email de ${email.sender} : ${email.subject}`)
+        }, 800)
+      }
+    }, 500)
+  }
+
+  const handleExampleChange = (index: number) => {
+    startExample(index)
+  }
 
   const triggerAIActionsSequence = () => {
     setShowAIActions(true)
@@ -95,6 +129,66 @@ export default function MainScreen() {
     }, 5500)
   }
 
+  const triggerAppointmentActionsSequence = () => {
+    // Load appointment-specific actions
+    setAiActions([...mockAIActionsRDV])
+    setShowAIActions(true)
+
+    // Progress through appointment actions sequentially
+    const delays = [500, 1200, 2000, 2800, 3600, 4400]
+
+    delays.forEach((delay, index) => {
+      setTimeout(() => {
+        setAiActions(prev =>
+          prev.map((action, i) =>
+            i === index
+              ? { ...action, status: 'in_progress' as const }
+              : action
+          )
+        )
+
+        // Complete after 600ms
+        setTimeout(() => {
+          setAiActions(prev =>
+            prev.map((action, i) =>
+              i === index
+                ? { ...action, status: 'completed' as const }
+                : action
+            )
+          )
+        }, 600)
+      }, delay)
+    })
+
+    // After all actions complete: hide actions, add messages, generate response
+    setTimeout(() => {
+      setShowAIActions(false)
+
+      // Add completion message
+      setTimeout(() => {
+        addMessage('assistant', 'Parfait ! J\'ai vérifié votre agenda et trouvé un créneau disponible. Le rendez-vous a été créé dans Google Calendar. Je génère maintenant la réponse de confirmation...')
+
+        // Auto-trigger response generation
+        setTimeout(() => {
+          setIsGenerating(true)
+
+          setTimeout(() => {
+            const responseKey = currentEmail.category as keyof typeof mockAIResponse
+            const generatedResponse = mockAIResponse[responseKey] || mockAIResponse.reservation
+            setAiResponse(generatedResponse)
+            setIsGenerating(false)
+            addMessage('assistant', 'Rendez-vous confirmé pour le mardi 15 octobre à 14h ! La réponse est prête à être envoyée.')
+          }, 2000)
+        }, 500)
+      }, 300)
+
+      // Reset actions for potential next use
+      setTimeout(() => {
+        setAiActions([...mockAIActions])
+      }, 1000)
+    }, 5500)
+  }
+
   const addMessage = (role: 'user' | 'assistant', content: string) => {
     const newMessage: Message = {
       id: `msg-${Date.now()}`,
@@ -134,19 +228,8 @@ export default function MainScreen() {
     setToast({ message: 'Réponse envoyée avec succès ✅', show: true })
 
     setTimeout(() => {
-      addMessage('assistant', 'Réponse envoyée ! J\'ai mis à jour la carte Trello associée.')
+      addMessage('assistant', 'Réponse envoyée avec succès ! La carte Trello a été mise à jour automatiquement.')
       setAiResponse('')
-
-      // Move to next email after a delay
-      setTimeout(() => {
-        if (currentEmailIndex < mockEmails.length - 1) {
-          setCurrentEmailIndex(prev => prev + 1)
-          setPanelMode('email')
-          addMessage('assistant', `Email suivant : ${mockEmails[currentEmailIndex + 1].subject}`)
-        } else {
-          addMessage('assistant', 'Tous les emails ont été traités ! Excellente matinée de travail. 🎉')
-        }
-      }, 2000)
     }, 1000)
   }
 
@@ -199,12 +282,22 @@ export default function MainScreen() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-gray-900">Assistant IA - Camping Merendella</h1>
-            <p className="text-sm text-gray-600">Revue matinale des emails</p>
+            <p className="text-sm text-gray-600">Démos scénarios</p>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-gray-600">Email</span>
-              <span className="font-semibold text-blue-600">{currentEmailIndex + 1}/{mockEmails.length}</span>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Exemple :</span>
+              <select
+                value={currentEmailIndex}
+                onChange={(e) => handleExampleChange(Number(e.target.value))}
+                className="px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-900 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent cursor-pointer"
+              >
+                {mockEmails.map((email, index) => (
+                  <option key={email.id} value={index}>
+                    {index + 1}. {email.sender} - {email.category}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
         </div>
