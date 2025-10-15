@@ -27,7 +27,7 @@ export default function MainScreen() {
 
   const startExample = (emailIndex: number) => {
     // Reset all state
-    setMessages([...initialMessages])
+    setMessages([]) // Start with empty messages
     setCurrentEmailIndex(emailIndex)
     setPanelMode('email')
     setAiResponse('')
@@ -41,28 +41,19 @@ export default function MainScreen() {
     const timer = setTimeout(() => {
       if (emailIndex === 0) {
         // Example 1: Marketing campaign with RAG
-        addMessage('user', `Montre-moi le premier email à traiter.`)
+        addMessage('assistant', `Très bien, passons au prochain mail. Voici l'email de Laura Mercier de Digital Pulse Marketing concernant la campagne été 2025. Je vais analyser le contexte pour préparer une réponse complète.`)
         setTimeout(() => {
-          addMessage('assistant', `Voici l'email de Laura Mercier de Digital Pulse Marketing concernant la campagne été 2025. Je vais analyser le contexte pour préparer une réponse complète.`)
-          setTimeout(() => {
-            triggerAIActionsSequence()
-          }, 800)
+          triggerAIActionsSequence()
         }, 800)
       } else if (emailIndex === 1) {
         // Example 2: Appointment scheduling with calendar check
-        addMessage('user', `Montre-moi l'email concernant le rendez-vous.`)
+        addMessage('assistant', `OK, passons au prochain mail. Voici l'email de Marc Dubois concernant un rendez-vous pour les panneaux solaires. Je vais vérifier votre agenda et trouver un créneau disponible.`)
         setTimeout(() => {
-          addMessage('assistant', `Voici l'email de Marc Dubois concernant un rendez-vous pour les panneaux solaires. Je vais vérifier votre agenda et trouver un créneau disponible.`)
-          setTimeout(() => {
-            triggerAppointmentActionsSequence()
-          }, 800)
+          triggerAppointmentActionsSequence()
         }, 800)
       } else {
         // Other examples: just show the email
-        addMessage('user', `Montre-moi cet email.`)
-        setTimeout(() => {
-          addMessage('assistant', `Voici l'email de ${email.sender} : ${email.subject}`)
-        }, 800)
+        addMessage('assistant', `Très bien, passons au prochain mail. Voici l'email de ${email.sender} : ${email.subject}`)
       }
     }, 500)
   }
