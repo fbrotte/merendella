@@ -2,14 +2,14 @@ import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import ChatColumn from './ChatColumn'
 import ContextPanel from './ContextPanel'
-import { mockEmails, mockTrelloCards, initialMessages, mockAIResponse, mockAIActions, mockAIActionsRDV, mockAIActionsDocSearch, mockAIActionsReminder, mockReminders, mockDocuments } from '../data/MockData'
+import { mockEmails, mockTrelloCards, initialMessages, mockAIResponse, mockAIActions, mockAIActionsRDV, mockAIActionsDocSearch, mockAIActionsReminder, mockAIActionsInvoice, mockReminders, mockDocuments } from '../data/MockData'
 import type { Message, AIAction, Reminder, Document } from '../data/MockData'
 import Toast from './Toast'
 
 export default function MainScreen() {
   const [messages, setMessages] = useState<Message[]>([])
   const [currentEmailIndex, setCurrentEmailIndex] = useState(0)
-  const [panelMode, setPanelMode] = useState<'email' | 'trello' | 'reminders' | 'documents' | 'calendar'>('email')
+  const [panelMode, setPanelMode] = useState<'email' | 'trello' | 'reminders' | 'documents' | 'calendar' | 'invoice'>('email')
   const [aiResponse, setAiResponse] = useState<string>('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [toast, setToast] = useState<{ message: string; show: boolean }>({ message: '', show: false })
@@ -20,6 +20,14 @@ export default function MainScreen() {
   const [foundDocuments, setFoundDocuments] = useState<Document[]>([])
   const [proposedDate, setProposedDate] = useState<string>('2024-10-15')
   const [proposedTime, setProposedTime] = useState<string>('14:00')
+  const [invoiceData, setInvoiceData] = useState<{
+    invoiceNumber: string
+    supplier: string
+    amount: string
+    date: string
+    drivePath: string
+    fileName: string
+  } | null>(null)
 
   // Store active timeouts to clean them up when changing examples
   const activeTimeouts = useRef<NodeJS.Timeout[]>([])
@@ -52,13 +60,14 @@ export default function MainScreen() {
     // Reset all state
     setMessages([]) // Start with empty messages
     setCurrentEmailIndex(emailIndex)
-    setPanelMode(emailIndex === 2 ? 'documents' : emailIndex === 3 ? 'reminders' : 'email')
+    setPanelMode(emailIndex === 2 ? 'documents' : emailIndex === 3 ? 'reminders' : emailIndex === 4 ? 'invoice' : 'email')
     setAiResponse('')
     setIsGenerating(false)
     setShowAIActions(false)
     setAiActions([...mockAIActions])
     setReminders([...mockReminders])
     setFoundDocuments([])
+    setInvoiceData(null)
 
     const email = mockEmails[emailIndex]
 
@@ -99,6 +108,13 @@ export default function MainScreen() {
           }, 800)
           activeTimeouts.current.push(timer3)
         }, 600)
+        activeTimeouts.current.push(timer2)
+      } else if (emailIndex === 4) {
+        // Example 5: Invoice processing
+        addMessage('assistant', `Très bien, passons au prochain mail. J'ai détecté une facture d'Aquatech Solutions. Je vais la traiter automatiquement : enregistrement sur Drive, classement et impression.`)
+        const timer2 = setTimeout(() => {
+          triggerInvoiceProcessingSequence()
+        }, 800)
         activeTimeouts.current.push(timer2)
       } else {
         // Other examples: just show the email
@@ -357,6 +373,57 @@ export default function MainScreen() {
     }, 4000)
   }
 
+  const triggerInvoiceProcessingSequence = () => {
+    // Load invoice processing actions
+    setAiActions([...mockAIActionsInvoice])
+    setShowAIActions(true)
+    setAiActionsCompleted(false)
+
+    // Progress through invoice processing actions sequentially
+    const delays = [500, 1200, 2000, 2800, 3600]
+
+    delays.forEach((delay, index) => {
+      setTimeout(() => {
+        setAiActions(prev =>
+          prev.map((action, i) =>
+            i === index
+              ? { ...action, status: 'in_progress' as const }
+              : action
+          )
+        )
+
+        // Complete after 600ms
+        setTimeout(() => {
+          setAiActions(prev =>
+            prev.map((action, i) =>
+              i === index
+                ? { ...action, status: 'completed' as const }
+                : action
+            )
+          )
+        }, 600)
+      }, delay)
+    })
+
+    // After all actions complete: mark as completed, set invoice data
+    setTimeout(() => {
+      setAiActionsCompleted(true)
+
+      // Add completion message and show invoice details
+      setTimeout(() => {
+        setInvoiceData({
+          invoiceNumber: '2024-0892',
+          supplier: 'Aquatech Solutions',
+          amount: '12 450,00 €',
+          date: '09 octobre 2024',
+          drivePath: 'Facturation/2024/Aquatech Solutions',
+          fileName: 'Facture_2024-0892_Aquatech.pdf'
+        })
+        addMessage('assistant', 'Traitement automatique terminé ! La facture a été enregistrée sur Drive, le mail classé dans Factures, et l\'impression lancée.')
+      }, 300)
+    }, 4800)
+  }
+
   const addMessage = (role: 'user' | 'assistant', content: string) => {
     const newMessage: Message = {
       id: `msg-${Date.now()}`,
@@ -504,6 +571,7 @@ export default function MainScreen() {
             documents={foundDocuments}
             proposedDate={proposedDate}
             proposedTime={proposedTime}
+            invoiceData={invoiceData}
             aiResponse={aiResponse}
             isGenerating={isGenerating}
             onGenerateResponse={handleGenerateResponse}

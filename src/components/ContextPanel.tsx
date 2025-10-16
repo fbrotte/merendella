@@ -1,19 +1,28 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, CheckSquare, Calendar, User, Trello, ArrowLeft, Sparkles, Send, Edit3, Bell, FileSearch } from 'lucide-react'
+import { Mail, CheckSquare, Calendar, User, Trello, ArrowLeft, Sparkles, Send, Edit3, Bell, FileSearch, FileText } from 'lucide-react'
 import type {Email, TrelloCard, Reminder, Document} from '../data/MockData'
 import { cn } from '../lib/utils'
 import RemindersDisplay from './RemindersDisplay'
 import DocumentsDisplay from './DocumentsDisplay'
 import CalendarDisplay from './CalendarDisplay'
+import InvoiceProcessingDisplay from './InvoiceProcessingDisplay'
 
 interface ContextPanelProps {
-  mode: 'email' | 'trello' | 'reminders' | 'documents' | 'calendar'
+  mode: 'email' | 'trello' | 'reminders' | 'documents' | 'calendar' | 'invoice'
   email?: Email
   trelloCard?: TrelloCard
   reminders?: Reminder[]
   documents?: Document[]
   proposedDate?: string
   proposedTime?: string
+  invoiceData?: {
+    invoiceNumber: string
+    supplier: string
+    amount: string
+    date: string
+    drivePath: string
+    fileName: string
+  }
   aiResponse?: string
   isGenerating?: boolean
   onGenerateResponse?: () => void
@@ -34,6 +43,7 @@ export default function ContextPanel({
   documents,
   proposedDate,
   proposedTime,
+  invoiceData,
   aiResponse,
   isGenerating,
   onGenerateResponse,
@@ -52,6 +62,7 @@ export default function ContextPanel({
       case 'reminders': return <Bell className="w-6 h-6" />
       case 'documents': return <FileSearch className="w-6 h-6" />
       case 'calendar': return <Calendar className="w-6 h-6" />
+      case 'invoice': return <FileText className="w-6 h-6" />
     }
   }
 
@@ -62,6 +73,7 @@ export default function ContextPanel({
       case 'reminders': return 'Rappels'
       case 'documents': return 'Documents trouvés'
       case 'calendar': return 'Sélection du créneau'
+      case 'invoice': return 'Facture traitée'
     }
   }
 
@@ -300,6 +312,26 @@ export default function ContextPanel({
                 proposedTime={proposedTime}
                 onValidate={onValidateCalendar}
                 onCancel={onCancelCalendar}
+              />
+            </motion.div>
+          )}
+
+          {mode === 'invoice' && invoiceData && (
+            <motion.div
+              key="invoice"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="p-6"
+            >
+              <InvoiceProcessingDisplay
+                invoiceNumber={invoiceData.invoiceNumber}
+                supplier={invoiceData.supplier}
+                amount={invoiceData.amount}
+                date={invoiceData.date}
+                drivePath={invoiceData.drivePath}
+                fileName={invoiceData.fileName}
               />
             </motion.div>
           )}

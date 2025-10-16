@@ -5,8 +5,9 @@ export interface Email {
   subject: string
   content: string
   date: string
-  category: 'reservation' | 'facture' | 'question' | 'spam' | 'prestataire' | 'rendez-vous' | 'recherche-doc'
+  category: 'reservation' | 'facture' | 'question' | 'spam' | 'prestataire' | 'rendez-vous' | 'recherche-doc' | 'rappel'
   trelloCardId?: string
+  attachments?: Array<{ name: string; type: string; size: string }>
 }
 
 export interface Document {
@@ -116,6 +117,31 @@ EcoTech Solutions`,
     content: '',
     date: '2024-10-09 10:30',
     category: 'rappel'
+  },
+  {
+    id: 'email-3',
+    sender: 'Aquatech Solutions',
+    senderEmail: 'facturation@aquatech-solutions.fr',
+    subject: 'Facture n°2024-0892 - Travaux piscine',
+    content: `Bonjour,
+
+Veuillez trouver ci-joint la facture n°2024-0892 pour les travaux de rénovation de la piscine effectués en septembre 2024.
+
+Montant total : 12 450,00 € TTC
+Échéance de paiement : 30 jours
+
+Cordialement,
+Service Facturation
+Aquatech Solutions`,
+    date: '2024-10-09 11:00',
+    category: 'facture',
+    attachments: [
+      {
+        name: 'Facture_2024-0892_Aquatech.pdf',
+        type: 'application/pdf',
+        size: '245 KB'
+      }
+    ]
   }
 ]
 
@@ -380,6 +406,45 @@ export const mockAIActionsReminder: AIAction[] = [
     description: 'Création du rappel',
     status: 'pending',
     details: 'Ajout dans la liste des rappels'
+  }
+]
+
+// Actions RAG pour le traitement de facture (email 3 / scenario 5)
+export const mockAIActionsInvoice: AIAction[] = [
+  {
+    id: 'action-invoice-1',
+    type: 'analyze',
+    description: 'Détection et analyse de la facture',
+    status: 'pending',
+    details: 'Type : Facture prestataire | Format : PDF'
+  },
+  {
+    id: 'action-invoice-2',
+    type: 'analyze',
+    description: 'Extraction des métadonnées',
+    status: 'pending',
+    details: 'N° 2024-0892 | Aquatech Solutions | 12 450,00 €'
+  },
+  {
+    id: 'action-invoice-3',
+    type: 'generate',
+    description: 'Upload vers Google Drive',
+    status: 'pending',
+    details: 'Dossier : Facturation/2024/Aquatech Solutions'
+  },
+  {
+    id: 'action-invoice-4',
+    type: 'generate',
+    description: 'Déplacement du mail vers Factures',
+    status: 'pending',
+    details: 'Gmail : Label "Factures" appliqué'
+  },
+  {
+    id: 'action-invoice-5',
+    type: 'generate',
+    description: 'Lancement de l\'impression',
+    status: 'pending',
+    details: 'Imprimante : HP LaserJet Bureau'
   }
 ]
 
