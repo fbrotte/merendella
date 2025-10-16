@@ -9,7 +9,7 @@ import Toast from './Toast'
 export default function MainScreen() {
   const [messages, setMessages] = useState<Message[]>([])
   const [currentEmailIndex, setCurrentEmailIndex] = useState(0)
-  const [panelMode, setPanelMode] = useState<'email' | 'trello' | 'reminders' | 'documents'>('email')
+  const [panelMode, setPanelMode] = useState<'email' | 'trello' | 'reminders' | 'documents' | 'calendar'>('email')
   const [aiResponse, setAiResponse] = useState<string>('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [toast, setToast] = useState<{ message: string; show: boolean }>({ message: '', show: false })
@@ -18,6 +18,8 @@ export default function MainScreen() {
   const [aiActionsCompleted, setAiActionsCompleted] = useState(false)
   const [reminders, setReminders] = useState<Reminder[]>([...mockReminders])
   const [foundDocuments, setFoundDocuments] = useState<Document[]>([])
+  const [proposedDate, setProposedDate] = useState<string>('2024-10-15')
+  const [proposedTime, setProposedTime] = useState<string>('14:00')
 
   // Store active timeouts to clean them up when changing examples
   const activeTimeouts = useRef<NodeJS.Timeout[]>([])
@@ -165,13 +167,14 @@ export default function MainScreen() {
   }
 
   const triggerAppointmentActionsSequence = () => {
-    // Load appointment-specific actions
-    setAiActions([...mockAIActionsRDV])
+    // Load appointment-specific actions (only the first 4 steps - up to finding the slot)
+    const searchActions = mockAIActionsRDV.slice(0, 4) // Only search and analysis steps
+    setAiActions(searchActions)
     setShowAIActions(true)
     setAiActionsCompleted(false)
 
-    // Progress through appointment actions sequentially
-    const delays = [500, 1200, 2000, 2800, 3600, 4400]
+    // Progress through appointment search actions sequentially
+    const delays = [500, 1200, 2000, 2800]
 
     delays.forEach((delay, index) => {
       setTimeout(() => {
@@ -196,28 +199,65 @@ export default function MainScreen() {
       }, delay)
     })
 
-    // After all actions complete: mark as completed, add messages, generate response
+    // After search complete: mark as completed, show calendar
     setTimeout(() => {
       setAiActionsCompleted(true)
 
-      // Add completion message
+      // Add completion message and show calendar
       setTimeout(() => {
-        addMessage('assistant', 'Parfait ! J\'ai vérifié votre agenda et trouvé un créneau disponible. Le rendez-vous a été créé dans Google Calendar. Je génère maintenant la réponse de confirmation...')
-
-        // Auto-trigger response generation
-        setTimeout(() => {
-          setIsGenerating(true)
-
-          setTimeout(() => {
-            const responseKey = currentEmail.category as keyof typeof mockAIResponse
-            const generatedResponse = mockAIResponse[responseKey] || mockAIResponse.reservation
-            setAiResponse(generatedResponse)
-            setIsGenerating(false)
-            addMessage('assistant', 'Rendez-vous confirmé pour le mardi 15 octobre à 14h ! La réponse est prête à être envoyée.')
-          }, 2000)
-        }, 500)
+        addMessage('assistant', 'J\'ai trouvé un créneau disponible ! Je vous propose le mardi 15 octobre à 14h00 pour 1h30. Vous pouvez valider ce créneau ou en choisir un autre dans le calendrier.')
+        setPanelMode('calendar')
+        setProposedDate('2024-10-15')
+        setProposedTime('14:00')
       }, 300)
-    }, 5500)
+    }, 3800)
+  }
+
+  const handleValidateCalendar = () => {
+    // User validated the calendar slot
+    addMessage('user', 'Valide ce créneau et crée le rendez-vous.')
+    setPanelMode('email')
+
+    setTimeout(() => {
+      addMessage('assistant', 'Parfait ! Je crée le rendez-vous dans Google Calendar et je génère la réponse de confirmation...')
+
+      // Show the calendar creation action
+      setShowAIActions(true)
+      setAiActionsCompleted(false)
+      setAiActions([mockAIActionsRDV[4]]) // Calendar creation step
+
+      setTimeout(() => {
+        setAiActions(prev =>
+          prev.map(action => ({ ...action, status: 'in_progress' as const }))
+        )
+
+        setTimeout(() => {
+          setAiActions(prev =>
+            prev.map(action => ({ ...action, status: 'completed' as const }))
+          )
+          setAiActionsCompleted(true)
+
+          // Generate response
+          setTimeout(() => {
+            setIsGenerating(true)
+
+            setTimeout(() => {
+              const responseKey = currentEmail.category as keyof typeof mockAIResponse
+              const generatedResponse = mockAIResponse[responseKey] || mockAIResponse.reservation
+              setAiResponse(generatedResponse)
+              setIsGenerating(false)
+              addMessage('assistant', 'Rendez-vous confirmé pour le mardi 15 octobre à 14h ! La réponse est prête à être envoyée.')
+              setShowAIActions(false)
+            }, 2000)
+          }, 500)
+        }, 600)
+      }, 500)
+    }, 800)
+  }
+
+  const handleCancelCalendar = () => {
+    addMessage('user', 'Annule, je vais proposer une autre date.')
+    setPanelMode('email')
   }
 
   const triggerDocumentSearchSequence = () => {
@@ -462,6 +502,8 @@ export default function MainScreen() {
             trelloCard={currentTrelloCard}
             reminders={reminders}
             documents={foundDocuments}
+            proposedDate={proposedDate}
+            proposedTime={proposedTime}
             aiResponse={aiResponse}
             isGenerating={isGenerating}
             onGenerateResponse={handleGenerateResponse}
@@ -470,6 +512,8 @@ export default function MainScreen() {
             onViewTrello={currentTrelloCard ? handleViewTrello : undefined}
             onBackToEmail={handleBackToEmail}
             onAiResponseChange={handleAiResponseChange}
+            onValidateCalendar={handleValidateCalendar}
+            onCancelCalendar={handleCancelCalendar}
           />
         </motion.div>
       </div>

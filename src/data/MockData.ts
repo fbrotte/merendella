@@ -115,7 +115,7 @@ EcoTech Solutions`,
     subject: 'Rappel - Vérifier les réservations',
     content: '',
     date: '2024-10-09 10:30',
-    category: 'recherche-doc'
+    category: 'rappel'
   }
 ]
 

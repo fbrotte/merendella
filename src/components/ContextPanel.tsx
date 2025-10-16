@@ -4,13 +4,16 @@ import type {Email, TrelloCard, Reminder, Document} from '../data/MockData'
 import { cn } from '../lib/utils'
 import RemindersDisplay from './RemindersDisplay'
 import DocumentsDisplay from './DocumentsDisplay'
+import CalendarDisplay from './CalendarDisplay'
 
 interface ContextPanelProps {
-  mode: 'email' | 'trello' | 'reminders' | 'documents'
+  mode: 'email' | 'trello' | 'reminders' | 'documents' | 'calendar'
   email?: Email
   trelloCard?: TrelloCard
   reminders?: Reminder[]
   documents?: Document[]
+  proposedDate?: string
+  proposedTime?: string
   aiResponse?: string
   isGenerating?: boolean
   onGenerateResponse?: () => void
@@ -19,6 +22,8 @@ interface ContextPanelProps {
   onViewTrello?: () => void
   onBackToEmail?: () => void
   onAiResponseChange?: (value: string) => void
+  onValidateCalendar?: () => void
+  onCancelCalendar?: () => void
 }
 
 export default function ContextPanel({
@@ -27,6 +32,8 @@ export default function ContextPanel({
   trelloCard,
   reminders,
   documents,
+  proposedDate,
+  proposedTime,
   aiResponse,
   isGenerating,
   onGenerateResponse,
@@ -35,25 +42,37 @@ export default function ContextPanel({
   onViewTrello,
   onBackToEmail,
   onAiResponseChange,
+  onValidateCalendar,
+  onCancelCalendar,
 }: ContextPanelProps) {
+  const getIcon = () => {
+    switch (mode) {
+      case 'email': return <Mail className="w-6 h-6" />
+      case 'trello': return <Trello className="w-6 h-6" />
+      case 'reminders': return <Bell className="w-6 h-6" />
+      case 'documents': return <FileSearch className="w-6 h-6" />
+      case 'calendar': return <Calendar className="w-6 h-6" />
+    }
+  }
+
+  const getTitle = () => {
+    switch (mode) {
+      case 'email': return 'Aperçu Email'
+      case 'trello': return 'Carte Trello'
+      case 'reminders': return 'Rappels'
+      case 'documents': return 'Documents trouvés'
+      case 'calendar': return 'Sélection du créneau'
+    }
+  }
+
   return (
     <div className="flex flex-col h-full bg-white">
       {/* Header */}
       <div className="flex-shrink-0 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            {mode === 'email' ? (
-              <Mail className="w-6 h-6" />
-            ) : mode === 'trello' ? (
-              <Trello className="w-6 h-6" />
-            ) : mode === 'reminders' ? (
-              <Bell className="w-6 h-6" />
-            ) : (
-              <FileSearch className="w-6 h-6" />
-            )}
-            <h2 className="text-lg font-semibold">
-              {mode === 'email' ? 'Aperçu Email' : mode === 'trello' ? 'Carte Trello' : mode === 'reminders' ? 'Rappels' : 'Documents trouvés'}
-            </h2>
+            {getIcon()}
+            <h2 className="text-lg font-semibold">{getTitle()}</h2>
           </div>
           {mode === 'trello' && onBackToEmail && (
             <button
@@ -264,6 +283,24 @@ export default function ContextPanel({
               className="p-6"
             >
               <DocumentsDisplay documents={documents} />
+            </motion.div>
+          )}
+
+          {mode === 'calendar' && proposedDate && proposedTime && onValidateCalendar && onCancelCalendar && (
+            <motion.div
+              key="calendar"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="p-6"
+            >
+              <CalendarDisplay
+                proposedDate={proposedDate}
+                proposedTime={proposedTime}
+                onValidate={onValidateCalendar}
+                onCancel={onCancelCalendar}
+              />
             </motion.div>
           )}
         </AnimatePresence>
