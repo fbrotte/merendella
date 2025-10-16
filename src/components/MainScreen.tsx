@@ -1,39 +1,62 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { motion } from 'framer-motion'
 import ChatColumn from './ChatColumn'
 import ContextPanel from './ContextPanel'
-import { mockEmails, mockTrelloCards, initialMessages, mockAIResponse, mockAIActions, mockAIActionsRDV } from '../data/MockData'
-import type { Message, AIAction } from '../data/MockData'
+import { mockEmails, mockTrelloCards, initialMessages, mockAIResponse, mockAIActions, mockAIActionsRDV, mockAIActionsDocSearch, mockAIActionsReminder, mockReminders, mockDocuments } from '../data/MockData'
+import type { Message, AIAction, Reminder, Document } from '../data/MockData'
 import Toast from './Toast'
 
 export default function MainScreen() {
-  const [messages, setMessages] = useState<Message[]>(initialMessages)
+  const [messages, setMessages] = useState<Message[]>([])
   const [currentEmailIndex, setCurrentEmailIndex] = useState(0)
-  const [panelMode, setPanelMode] = useState<'email' | 'trello'>('email')
+  const [panelMode, setPanelMode] = useState<'email' | 'trello' | 'reminders' | 'documents'>('email')
   const [aiResponse, setAiResponse] = useState<string>('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [toast, setToast] = useState<{ message: string; show: boolean }>({ message: '', show: false })
   const [aiActions, setAiActions] = useState<AIAction[]>([...mockAIActions])
   const [showAIActions, setShowAIActions] = useState(false)
   const [aiActionsCompleted, setAiActionsCompleted] = useState(false)
+  const [reminders, setReminders] = useState<Reminder[]>([...mockReminders])
+  const [foundDocuments, setFoundDocuments] = useState<Document[]>([])
+
+  // Store active timeouts to clean them up when changing examples
+  const activeTimeouts = useRef<NodeJS.Timeout[]>([])
 
   const currentEmail = mockEmails[currentEmailIndex]
   const currentTrelloCard = mockTrelloCards.find(card => card.id === currentEmail?.trelloCardId)
 
+  // Clear all active timeouts
+  const clearAllTimeouts = () => {
+    activeTimeouts.current.forEach(timer => clearTimeout(timer))
+    activeTimeouts.current = []
+  }
+
   // Initialize first example on mount
   useEffect(() => {
-    startExample(0)
+    const timer = setTimeout(() => {
+      startExample(0)
+    }, 100)
+
+    return () => {
+      clearTimeout(timer)
+      clearAllTimeouts()
+    }
   }, [])
 
   const startExample = (emailIndex: number) => {
+    // Clear any pending timeouts from previous example
+    clearAllTimeouts()
+
     // Reset all state
     setMessages([]) // Start with empty messages
     setCurrentEmailIndex(emailIndex)
-    setPanelMode('email')
+    setPanelMode(emailIndex === 2 ? 'documents' : emailIndex === 3 ? 'reminders' : 'email')
     setAiResponse('')
     setIsGenerating(false)
     setShowAIActions(false)
     setAiActions([...mockAIActions])
+    setReminders([...mockReminders])
+    setFoundDocuments([])
 
     const email = mockEmails[emailIndex]
 
@@ -42,20 +65,45 @@ export default function MainScreen() {
       if (emailIndex === 0) {
         // Example 1: Marketing campaign with RAG
         addMessage('assistant', `Très bien, passons au prochain mail. Voici l'email de Laura Mercier de Digital Pulse Marketing concernant la campagne été 2025. Je vais analyser le contexte pour préparer une réponse complète.`)
-        setTimeout(() => {
+        const timer2 = setTimeout(() => {
           triggerAIActionsSequence()
         }, 800)
+        activeTimeouts.current.push(timer2)
       } else if (emailIndex === 1) {
         // Example 2: Appointment scheduling with calendar check
         addMessage('assistant', `OK, passons au prochain mail. Voici l'email de Marc Dubois concernant un rendez-vous pour les panneaux solaires. Je vais vérifier votre agenda et trouver un créneau disponible.`)
-        setTimeout(() => {
+        const timer2 = setTimeout(() => {
           triggerAppointmentActionsSequence()
         }, 800)
+        activeTimeouts.current.push(timer2)
+      } else if (emailIndex === 2) {
+        // Example 3: Document search
+        addMessage('user', 'J\'aimerais que tu retrouves les plans du projet de rénovation de la piscine.')
+        const timer2 = setTimeout(() => {
+          addMessage('assistant', 'Bien sûr ! Je vais rechercher dans tous les documents du camping pour trouver les plans du projet de rénovation de la piscine.')
+          const timer3 = setTimeout(() => {
+            triggerDocumentSearchSequence()
+          }, 800)
+          activeTimeouts.current.push(timer3)
+        }, 600)
+        activeTimeouts.current.push(timer2)
+      } else if (emailIndex === 3) {
+        // Example 4: Reminder creation
+        addMessage('user', 'Ajoute-moi un rappel pour vérifier les réservations en attente dans 3 jours à 11h.')
+        const timer2 = setTimeout(() => {
+          addMessage('assistant', 'Parfait ! Je vais créer un rappel pour vérifier les réservations en attente. Je calcule la date et je l\'ajoute à votre liste.')
+          const timer3 = setTimeout(() => {
+            triggerReminderCreationSequence()
+          }, 800)
+          activeTimeouts.current.push(timer3)
+        }, 600)
+        activeTimeouts.current.push(timer2)
       } else {
         // Other examples: just show the email
         addMessage('assistant', `Très bien, passons au prochain mail. Voici l'email de ${email.sender} : ${email.subject}`)
       }
     }, 500)
+    activeTimeouts.current.push(timer)
   }
 
   const handleExampleChange = (index: number) => {
@@ -64,6 +112,7 @@ export default function MainScreen() {
 
   const triggerAIActionsSequence = () => {
     setShowAIActions(true)
+    setAiActionsCompleted(false)
 
     // Progress through actions sequentially
     const delays = [500, 1200, 2000, 2800, 3600, 4400]
@@ -91,9 +140,9 @@ export default function MainScreen() {
       }, delay)
     })
 
-    // After all actions complete: hide actions, add message, generate response
+    // After all actions complete: mark as completed, add message, generate response
     setTimeout(() => {
-      setShowAIActions(false)
+      setAiActionsCompleted(true)
 
       // Add completion message
       setTimeout(() => {
@@ -112,11 +161,6 @@ export default function MainScreen() {
           }, 2000)
         }, 500)
       }, 300)
-
-      // Reset actions for potential next use
-      setTimeout(() => {
-        setAiActions([...mockAIActions])
-      }, 1000)
     }, 5500)
   }
 
@@ -124,6 +168,7 @@ export default function MainScreen() {
     // Load appointment-specific actions
     setAiActions([...mockAIActionsRDV])
     setShowAIActions(true)
+    setAiActionsCompleted(false)
 
     // Progress through appointment actions sequentially
     const delays = [500, 1200, 2000, 2800, 3600, 4400]
@@ -151,9 +196,9 @@ export default function MainScreen() {
       }, delay)
     })
 
-    // After all actions complete: hide actions, add messages, generate response
+    // After all actions complete: mark as completed, add messages, generate response
     setTimeout(() => {
-      setShowAIActions(false)
+      setAiActionsCompleted(true)
 
       // Add completion message
       setTimeout(() => {
@@ -172,12 +217,104 @@ export default function MainScreen() {
           }, 2000)
         }, 500)
       }, 300)
-
-      // Reset actions for potential next use
-      setTimeout(() => {
-        setAiActions([...mockAIActions])
-      }, 1000)
     }, 5500)
+  }
+
+  const triggerDocumentSearchSequence = () => {
+    // Load document search actions
+    setAiActions([...mockAIActionsDocSearch])
+    setShowAIActions(true)
+    setAiActionsCompleted(false)
+
+    // Progress through document search actions sequentially
+    const delays = [500, 1200, 2000, 2800, 3600]
+
+    delays.forEach((delay, index) => {
+      setTimeout(() => {
+        setAiActions(prev =>
+          prev.map((action, i) =>
+            i === index
+              ? { ...action, status: 'in_progress' as const }
+              : action
+          )
+        )
+
+        // Complete after 600ms
+        setTimeout(() => {
+          setAiActions(prev =>
+            prev.map((action, i) =>
+              i === index
+                ? { ...action, status: 'completed' as const }
+                : action
+            )
+          )
+        }, 600)
+      }, delay)
+    })
+
+    // After all actions complete: mark as completed, show documents
+    setTimeout(() => {
+      setAiActionsCompleted(true)
+
+      // Add completion message and show documents
+      setTimeout(() => {
+        setFoundDocuments(mockDocuments)
+        addMessage('assistant', 'J\'ai trouvé 3 documents pertinents concernant le projet de rénovation de la piscine. Les documents sont affichés par ordre de pertinence.')
+      }, 300)
+    }, 4800)
+  }
+
+  const triggerReminderCreationSequence = () => {
+    // Load reminder creation actions
+    setAiActions([...mockAIActionsReminder])
+    setShowAIActions(true)
+    setAiActionsCompleted(false)
+
+    // Progress through reminder creation actions sequentially
+    const delays = [500, 1200, 2000, 2800]
+
+    delays.forEach((delay, index) => {
+      setTimeout(() => {
+        setAiActions(prev =>
+          prev.map((action, i) =>
+            i === index
+              ? { ...action, status: 'in_progress' as const }
+              : action
+          )
+        )
+
+        // Complete after 600ms
+        setTimeout(() => {
+          setAiActions(prev =>
+            prev.map((action, i) =>
+              i === index
+                ? { ...action, status: 'completed' as const }
+                : action
+            )
+          )
+        }, 600)
+      }, delay)
+    })
+
+    // After all actions complete: mark as completed, add new reminder
+    setTimeout(() => {
+      setAiActionsCompleted(true)
+
+      // Add completion message and create new reminder
+      setTimeout(() => {
+        const newReminder: Reminder = {
+          id: 'reminder-new',
+          title: 'Vérifier les réservations en attente',
+          description: 'Passer en revue toutes les réservations en attente et envoyer les confirmations',
+          date: '2024-10-12',
+          time: '11:00',
+          priority: 'high',
+          isNew: true
+        }
+        setReminders(prev => [newReminder, ...prev])
+        addMessage('assistant', 'Rappel créé avec succès ! Il apparaît en haut de votre liste. Vous recevrez une notification le 12 octobre à 10h45.')
+      }, 300)
+    }, 4000)
   }
 
   const addMessage = (role: 'user' | 'assistant', content: string) => {
@@ -323,6 +460,8 @@ export default function MainScreen() {
             mode={panelMode}
             email={currentEmail}
             trelloCard={currentTrelloCard}
+            reminders={reminders}
+            documents={foundDocuments}
             aiResponse={aiResponse}
             isGenerating={isGenerating}
             onGenerateResponse={handleGenerateResponse}

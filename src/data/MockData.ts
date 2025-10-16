@@ -5,8 +5,28 @@ export interface Email {
   subject: string
   content: string
   date: string
-  category: 'reservation' | 'facture' | 'question' | 'spam' | 'prestataire' | 'rendez-vous'
+  category: 'reservation' | 'facture' | 'question' | 'spam' | 'prestataire' | 'rendez-vous' | 'recherche-doc'
   trelloCardId?: string
+}
+
+export interface Document {
+  id: string
+  title: string
+  type: 'pdf' | 'docx' | 'xlsx' | 'image'
+  size: string
+  date: string
+  preview: string
+  relevance: number
+}
+
+export interface Reminder {
+  id: string
+  title: string
+  description: string
+  date: string
+  time: string
+  priority: 'low' | 'medium' | 'high'
+  isNew?: boolean
 }
 
 export interface TrelloCard {
@@ -78,6 +98,81 @@ EcoTech Solutions`,
     date: '2024-10-09 09:15',
     category: 'rendez-vous',
     trelloCardId: 'trello-2'
+  },
+  {
+    id: 'scenario-3',
+    sender: 'Recherche de documents',
+    senderEmail: '',
+    subject: 'Recherche de documents - Projet rénovation piscine',
+    content: '',
+    date: '2024-10-09 10:00',
+    category: 'recherche-doc'
+  },
+  {
+    id: 'scenario-4',
+    sender: 'Création de rappel',
+    senderEmail: '',
+    subject: 'Rappel - Vérifier les réservations',
+    content: '',
+    date: '2024-10-09 10:30',
+    category: 'recherche-doc'
+  }
+]
+
+export const mockDocuments: Document[] = [
+  {
+    id: 'doc-1',
+    title: 'Plans architecte - Rénovation piscine 2024.pdf',
+    type: 'pdf',
+    size: '2.4 MB',
+    date: '2024-03-15',
+    preview: 'Plans détaillés de la rénovation de la piscine principale incluant l\'agrandissement du bassin enfants, la nouvelle zone de plongeon et l\'installation du système de chauffage solaire.',
+    relevance: 95
+  },
+  {
+    id: 'doc-2',
+    title: 'Devis Aquatech - Travaux piscine.xlsx',
+    type: 'xlsx',
+    size: '156 KB',
+    date: '2024-03-20',
+    preview: 'Devis détaillé d\'Aquatech Solutions pour les travaux de rénovation. Inclut le calendrier prévisionnel, les coûts par poste et les conditions de paiement.',
+    relevance: 88
+  },
+  {
+    id: 'doc-3',
+    title: 'Projet piscine - Validation mairie.pdf',
+    type: 'pdf',
+    size: '890 KB',
+    date: '2024-02-28',
+    preview: 'Autorisation de travaux délivrée par la mairie pour le projet de rénovation et d\'agrandissement de la piscine. Permis de construire PC-2024-0156.',
+    relevance: 82
+  }
+]
+
+export const mockReminders: Reminder[] = [
+  {
+    id: 'reminder-1',
+    title: 'Appeler le fournisseur piscine',
+    description: 'Relancer Aquatech pour le devis final des travaux de rénovation',
+    date: '2024-10-12',
+    time: '10:00',
+    priority: 'high'
+  },
+  {
+    id: 'reminder-2',
+    title: 'Réunion équipe animation',
+    description: 'Préparer le planning des activités pour la semaine prochaine',
+    date: '2024-10-13',
+    time: '14:30',
+    priority: 'medium'
+  },
+  {
+    id: 'reminder-3',
+    title: 'Vérifier stock produits entretien',
+    description: 'Inventaire des produits de nettoyage et commande si nécessaire',
+    date: '2024-10-15',
+    time: '09:00',
+    priority: 'low'
   }
 ]
 
@@ -214,6 +309,77 @@ export const mockAIActionsRDV: AIAction[] = [
     type: 'generate',
     description: 'Génération de la réponse avec confirmation',
     status: 'pending'
+  }
+]
+
+// Actions RAG pour la recherche de documents (scenario 3)
+export const mockAIActionsDocSearch: AIAction[] = [
+  {
+    id: 'action-doc-1',
+    type: 'analyze',
+    description: 'Analyse de la demande utilisateur',
+    status: 'pending',
+    details: 'Recherche : plans projet rénovation piscine'
+  },
+  {
+    id: 'action-doc-2',
+    type: 'search',
+    description: 'Recherche dans la base documentaire',
+    status: 'pending',
+    details: 'Scan de 1,247 documents du camping'
+  },
+  {
+    id: 'action-doc-3',
+    type: 'analyze',
+    description: 'Analyse sémantique des documents',
+    status: 'pending',
+    details: 'Traitement NLP - Extraction mots-clés'
+  },
+  {
+    id: 'action-doc-4',
+    type: 'retrieve',
+    description: 'Récupération des documents pertinents',
+    status: 'pending',
+    details: '3 documents trouvés avec score > 80%'
+  },
+  {
+    id: 'action-doc-5',
+    type: 'analyze',
+    description: 'Classement par pertinence',
+    status: 'pending',
+    details: 'Tri par score de similarité'
+  }
+]
+
+// Actions RAG pour la création de rappel (scenario 4)
+export const mockAIActionsReminder: AIAction[] = [
+  {
+    id: 'action-reminder-1',
+    type: 'analyze',
+    description: 'Analyse de la demande de rappel',
+    status: 'pending',
+    details: 'Extraction : tâche, date, heure, priorité'
+  },
+  {
+    id: 'action-reminder-2',
+    type: 'analyze',
+    description: 'Interprétation temporelle',
+    status: 'pending',
+    details: 'Calcul de la date : "dans 3 jours" → 2024-10-12'
+  },
+  {
+    id: 'action-reminder-3',
+    type: 'search',
+    description: 'Vérification des conflits d\'agenda',
+    status: 'pending',
+    details: 'Calendrier Google - Pas de conflit détecté'
+  },
+  {
+    id: 'action-reminder-4',
+    type: 'generate',
+    description: 'Création du rappel',
+    status: 'pending',
+    details: 'Ajout dans la liste des rappels'
   }
 ]
 

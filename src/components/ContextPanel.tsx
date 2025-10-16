@@ -1,12 +1,16 @@
 import { motion, AnimatePresence } from 'framer-motion'
-import { Mail, CheckSquare, Calendar, User, Trello, ArrowLeft, Sparkles, Send, Edit3 } from 'lucide-react'
-import type {Email, TrelloCard} from '../data/MockData'
+import { Mail, CheckSquare, Calendar, User, Trello, ArrowLeft, Sparkles, Send, Edit3, Bell, FileSearch } from 'lucide-react'
+import type {Email, TrelloCard, Reminder, Document} from '../data/MockData'
 import { cn } from '../lib/utils'
+import RemindersDisplay from './RemindersDisplay'
+import DocumentsDisplay from './DocumentsDisplay'
 
 interface ContextPanelProps {
-  mode: 'email' | 'trello'
+  mode: 'email' | 'trello' | 'reminders' | 'documents'
   email?: Email
   trelloCard?: TrelloCard
+  reminders?: Reminder[]
+  documents?: Document[]
   aiResponse?: string
   isGenerating?: boolean
   onGenerateResponse?: () => void
@@ -21,6 +25,8 @@ export default function ContextPanel({
   mode,
   email,
   trelloCard,
+  reminders,
+  documents,
   aiResponse,
   isGenerating,
   onGenerateResponse,
@@ -38,11 +44,15 @@ export default function ContextPanel({
           <div className="flex items-center gap-3">
             {mode === 'email' ? (
               <Mail className="w-6 h-6" />
-            ) : (
+            ) : mode === 'trello' ? (
               <Trello className="w-6 h-6" />
+            ) : mode === 'reminders' ? (
+              <Bell className="w-6 h-6" />
+            ) : (
+              <FileSearch className="w-6 h-6" />
             )}
             <h2 className="text-lg font-semibold">
-              {mode === 'email' ? 'Aperçu Email' : 'Carte Trello'}
+              {mode === 'email' ? 'Aperçu Email' : mode === 'trello' ? 'Carte Trello' : mode === 'reminders' ? 'Rappels' : 'Documents trouvés'}
             </h2>
           </div>
           {mode === 'trello' && onBackToEmail && (
@@ -228,6 +238,32 @@ export default function ContextPanel({
                   Cette carte est liée à l'email et sera mise à jour automatiquement après l'envoi de votre réponse.
                 </p>
               </div>
+            </motion.div>
+          )}
+
+          {mode === 'reminders' && reminders && (
+            <motion.div
+              key="reminders"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="p-6"
+            >
+              <RemindersDisplay reminders={reminders} />
+            </motion.div>
+          )}
+
+          {mode === 'documents' && documents && (
+            <motion.div
+              key="documents"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              transition={{ duration: 0.3 }}
+              className="p-6"
+            >
+              <DocumentsDisplay documents={documents} />
             </motion.div>
           )}
         </AnimatePresence>
