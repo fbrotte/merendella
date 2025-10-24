@@ -101,24 +101,6 @@ EcoTech Solutions`,
     trelloCardId: 'trello-2'
   },
   {
-    id: 'scenario-3',
-    sender: 'Recherche de documents',
-    senderEmail: '',
-    subject: 'Recherche de documents - Projet rénovation piscine',
-    content: '',
-    date: '2024-10-09 10:00',
-    category: 'recherche-doc'
-  },
-  {
-    id: 'scenario-4',
-    sender: 'Création de rappel',
-    senderEmail: '',
-    subject: 'Rappel - Vérifier les réservations',
-    content: '',
-    date: '2024-10-09 10:30',
-    category: 'rappel'
-  },
-  {
     id: 'email-3',
     sender: 'Aquatech Solutions',
     senderEmail: 'facturation@aquatech-solutions.fr',
@@ -133,7 +115,7 @@ Montant total : 12 450,00 € TTC
 Cordialement,
 Service Facturation
 Aquatech Solutions`,
-    date: '2024-10-09 11:00',
+    date: '2024-10-09 10:00',
     category: 'facture',
     attachments: [
       {
@@ -142,6 +124,24 @@ Aquatech Solutions`,
         size: '245 KB'
       }
     ]
+  },
+  {
+    id: 'scenario-3',
+    sender: 'Recherche de documents',
+    senderEmail: '',
+    subject: 'Recherche de documents - Projet rénovation piscine',
+    content: '',
+    date: '2024-10-09 10:30',
+    category: 'recherche-doc'
+  },
+  {
+    id: 'scenario-4',
+    sender: 'Création de rappel',
+    senderEmail: '',
+    subject: 'Rappel - Vérifier les réservations',
+    content: '',
+    date: '2024-10-09 11:00',
+    category: 'rappel'
   }
 ]
 

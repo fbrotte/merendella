@@ -60,7 +60,7 @@ export default function MainScreen() {
     // Reset all state
     setMessages([]) // Start with empty messages
     setCurrentEmailIndex(emailIndex)
-    setPanelMode(emailIndex === 2 ? 'documents' : emailIndex === 3 ? 'reminders' : emailIndex === 4 ? 'invoice' : 'email')
+    setPanelMode(emailIndex === 2 ? 'invoice' : emailIndex === 3 ? 'documents' : emailIndex === 4 ? 'reminders' : 'email')
     setAiResponse('')
     setIsGenerating(false)
     setShowAIActions(false)
@@ -88,7 +88,14 @@ export default function MainScreen() {
         }, 800)
         activeTimeouts.current.push(timer2)
       } else if (emailIndex === 2) {
-        // Example 3: Document search
+        // Example 3: Invoice processing
+        addMessage('assistant', `Très bien, passons au prochain mail. J'ai détecté une facture d'Aquatech Solutions. Je vais la traiter automatiquement : enregistrement sur Drive, classement et impression.`)
+        const timer2 = setTimeout(() => {
+          triggerInvoiceProcessingSequence()
+        }, 800)
+        activeTimeouts.current.push(timer2)
+      } else if (emailIndex === 3) {
+        // Example 4: Document search
         addMessage('user', 'J\'aimerais que tu retrouves les plans du projet de rénovation de la piscine.')
         const timer2 = setTimeout(() => {
           addMessage('assistant', 'Bien sûr ! Je vais rechercher dans tous les documents du camping pour trouver les plans du projet de rénovation de la piscine.')
@@ -98,8 +105,8 @@ export default function MainScreen() {
           activeTimeouts.current.push(timer3)
         }, 600)
         activeTimeouts.current.push(timer2)
-      } else if (emailIndex === 3) {
-        // Example 4: Reminder creation
+      } else if (emailIndex === 4) {
+        // Example 5: Reminder creation
         addMessage('user', 'Ajoute-moi un rappel pour vérifier les réservations en attente dans 3 jours à 11h.')
         const timer2 = setTimeout(() => {
           addMessage('assistant', 'Parfait ! Je vais créer un rappel pour vérifier les réservations en attente. Je calcule la date et je l\'ajoute à votre liste.')
@@ -108,13 +115,6 @@ export default function MainScreen() {
           }, 800)
           activeTimeouts.current.push(timer3)
         }, 600)
-        activeTimeouts.current.push(timer2)
-      } else if (emailIndex === 4) {
-        // Example 5: Invoice processing
-        addMessage('assistant', `Très bien, passons au prochain mail. J'ai détecté une facture d'Aquatech Solutions. Je vais la traiter automatiquement : enregistrement sur Drive, classement et impression.`)
-        const timer2 = setTimeout(() => {
-          triggerInvoiceProcessingSequence()
-        }, 800)
         activeTimeouts.current.push(timer2)
       } else {
         // Other examples: just show the email
